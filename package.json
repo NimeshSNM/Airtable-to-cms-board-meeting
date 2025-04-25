@@ -9,7 +9,7 @@
     "dependencies": {
       "airtable": "^0.12.2",
       "dotenv": "^16.4.5",
-      "webflow-api": "^2.6.5"
+      "webflow-api": "^1.0.0"
     },
     "author": "Nimesh SNM",
     "license": "ISC"
