@@ -114,7 +114,7 @@ function pollAirtableChanges() {
 
     airtableBase(airtableTable)
         .select({
-            view: 'Grid view',
+            view: 'Master Data',
             filterByFormula: `IS_AFTER({Last Modified}, "${lastCheckTime.toISOString()}")`
         })
         .eachPage((records, fetchNextPage) => {
