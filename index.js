@@ -44,15 +44,15 @@ async function handleAirtableRecord(record) {
         const airtableId = record.id;
 
         const webflowFields = {
-            'name': record.fields['Name'],
-            'board-meeting': record.fields['Board Meeting'],
-            'agenda': record.fields['Agenda'] ? record.fields['Agenda'][0]?.url : '',
-            'minutes': record.fields['Minutes'] ? record.fields['Minutes'][0]?.url : '',
-            'drive-link': record.fields['Drive link'] || '',
-            'year': record.fields['Year'],
-            'status': record.fields['Status'],
-            'airtable_record_id': airtableId,
-        };
+            'name': record.fields['council'] || 'Untitled',
+            'board-meeting': record.fields['Board Meeting'] || '',
+            'agenda': record.fields['Agenda'] ? record.fields['Agenda'][0].url : '',
+            'minutes': record.fields['Minutes'] ? record.fields['Minutes'][0].url : '',
+            'drive-link': record.fields['Google Drive Link'] || '',
+            'year': record.fields['Year'] || '',
+            'status': record.fields['Status'] || '',
+            'airtable_record_id': record.id,
+          };
 
         const webflowItemId = await createWebflowItem(webflowFields);
 
