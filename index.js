@@ -45,16 +45,15 @@ async function handleAirtableRecord(record) {
 
         // Map Airtable fields to Webflow field slugs
         const webflowFields = {
-            'name': record.fields['Council'] || 'Untitled', // Airtable 'Council' → Webflow 'Name'
-            'board-meeting': record.fields['Related Board meeting'] || '', // Airtable 'Related Board meeting' → Webflow 'Board Meeting'
-            'agenda': record.fields['Agenda'] ? record.fields['Agenda'][0].url : '', // Airtable 'Agenda' → Webflow 'Agenda'
-            'minutes': record.fields['Minutes'] ? record.fields['Minutes'][0].url : '', // Airtable 'Minutes' → Webflow 'Minutes'
-            'drive-link': record.fields['Google Drive link'] || '', // Airtable 'Google Drive link' → Webflow 'Drive Link'
-            'year': record.fields['Year'] || '', // Airtable 'Year' → Webflow 'Year'
-            'status': record.fields['Status'] || '', // Airtable 'Status' → Webflow 'Status'
-            'airtable_record_id': record.id, // Airtable Record ID → Webflow 'airtable_record_id' (custom field)
+            'name': String(record.fields['Council'] || 'Untitled'), // Ensures it's a string
+            'board-meeting': record.fields['Related Board meeting'] || '',
+            'agenda': record.fields['Agenda'] ? record.fields['Agenda'][0]?.url || '' : '',
+            'minutes': record.fields['Minutes'] ? record.fields['Minutes'][0]?.url || '' : '',
+            'drive-link': record.fields['Google Drive link'] || '',
+            'year': record.fields['Year'] || '',
+            'status': record.fields['Status'] || '',
+            'airtable_record_id': record.id,
         };
-
         // Create the Webflow item with the mapped fields
         const webflowItemId = await createWebflowItem(webflowFields);
 
