@@ -2,87 +2,77 @@ const Airtable = require('airtable');
 const Webflow = require('webflow-api');
 require('dotenv').config();
 
-// Initialize Airtable
+// Setup Airtable
 Airtable.configure({
-    apiKey: process.env.AIRTABLE_API_KEY,
+  apiKey: process.env.AIRTABLE_API_KEY,
 });
-const airtableBase = Airtable.base(process.env.AIRTABLE_BASE_ID);
-const airtableTable = process.env.AIRTABLE_TABLE_NAME; // Airtable Table Name
+const base = Airtable.base(process.env.AIRTABLE_BASE_ID);
+const tableName = process.env.AIRTABLE_TABLE_NAME;
 
-// Initialize Webflow
-const webflow = new Webflow({
-    token: process.env.WEBFLOW_API_KEY,
-});
-const webflowCollectionId = process.env.WEBFLOW_COLLECTION_ID; // Webflow Collection ID
+// Setup Webflow
+const webflow = new Webflow({ token: process.env.WEBFLOW_API_KEY });
+const collectionId = process.env.WEBFLOW_COLLECTION_ID;
 
-// Function to create Webflow item
+// Sleep to avoid rate limits
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Create only the name field in Webflow
 async function createWebflowItem(fields) {
-    try {
-        console.log("🔄 Creating Webflow item with fields:", fields);
+  try {
+    const response = await webflow.createItem({
+      collectionId,
+      fields: {
+        name: String(fields.name || "Untitled"),
+        _archived: false,
+        _draft: false,
+      },
+      live: true,
+    });
 
-        const response = await webflow.createItem({
-            collectionId: webflowCollectionId,
-            fields: {
-                ...fields,
-                _archived: false,
-                _draft: false,
-            },
-            live: true, // Immediately publish the item
-        });
-
-        console.log(`✅ Webflow item created. ID: ${response._id}`);
-        return response._id;
-    } catch (error) {
-        console.error("❌ Error creating Webflow item:", error.response?.data || error.message);
-        throw error;
-    }
+    console.log(`✅ Created item: ${response._id}`);
+    return response._id;
+  } catch (err) {
+    console.error("❌ Error creating Webflow item:", err.response?.data || err.message);
+    throw err;
+  }
 }
 
-// Function to handle a single Airtable record
+// Handle each Airtable record
 async function handleAirtableRecord(record) {
-    try {
-        const airtableId = record.id;
+  try {
+    const webflowFields = {
+      name: String(record.fields["Council"] || "Untitled"),
+    };
 
-        // Map Airtable fields to Webflow field slugs
-        const webflowFields = {
-            'name': String(record.fields['Council'] || 'Untitled'), // Ensures it's a string
-            'board-meeting': record.fields['Related Board meeting'] || '',
-            'agenda': record.fields['Agenda'] ? record.fields['Agenda'][0]?.url || '' : '',
-            'minutes': record.fields['Minutes'] ? record.fields['Minutes'][0]?.url || '' : '',
-            'drive-link': record.fields['Google Drive link'] || '',
-            'year': record.fields['Year'] || '',
-            'status': record.fields['Status'] || '',
-            'airtable_record_id': record.id,
-        };
-        // Create the Webflow item with the mapped fields
-        const webflowItemId = await createWebflowItem(webflowFields);
-
-        // Update the Airtable record with the Webflow item ID
-        await airtableBase(airtableTable).update(record.id, {
-            'Webflow ID': webflowItemId,
-        });
-    } catch (error) {
-        console.error("❌ Error handling Airtable record:", error.message);
-    }
+    await createWebflowItem(webflowFields);
+  } catch (err) {
+    console.error("❌ Error handling record:", err.message);
+  }
 }
 
-// Fetch Airtable records and create items in Webflow
-airtableBase(airtableTable)
-    .select({
-        view: 'Master Data', // Ensure this view exists
-    })
+// Process all records
+async function processAirtableRecords() {
+  base(tableName)
+    .select({ view: "Master Data" })
     .eachPage(
-        async (records, fetchNextPage) => {
-            for (const record of records) {
-                await handleAirtableRecord(record);
-            }
-            fetchNextPage();
-        },
-        (error) => {
-            if (error) {
-                console.error("❌ Error fetching Airtable records:", error);
-            } else {
-                console.log("✅ All records processed.");
-            }
+      async (records, fetchNextPage) => {
+        for (const record of records) {
+          await handleAirtableRecord(record);
+          await sleep(1100); // avoid rate limit
         }
+        fetchNextPage();
+      },
+      (err) => {
+        if (err) {
+          console.error("❌ Error fetching records:", err);
+        } else {
+          console.log("✅ Finished processing.");
+        }
+      }
     );
+}
+
+// Run
+processAirtableRecords();
