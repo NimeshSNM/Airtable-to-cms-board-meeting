@@ -1,17 +1,18 @@
 {
-    "name": "airtable-webflow-sync",
-    "version": "1.0.0",
-    "description": "Synchronizes Airtable with Webflow",
-    "main": "index.js",
-    "scripts": {
-      "start": "node index.js"
-    },
-    "dependencies": {
-      "airtable": "^0.12.2",
-      "dotenv": "^16.4.5",
-      "webflow-api": "^1.0.0"
-    },
-    "author": "Nimesh SNM",
-    "license": "ISC"
-  }
-  
+  "name": "airtable-webflow-sync",
+  "version": "1.0.0",
+  "description": "Synchronizes Airtable with Webflow",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "airtable": "^0.12.2",
+    "dotenv": "^16.4.5",
+    "webflow-api": "^1.0.0",
+    "express": "^4.18.3",  // Add express
+    "axios": "^1.6.8"      // Add axios
+  },
+  "author": "Nimesh SNM",
+  "license": "ISC"
+}
