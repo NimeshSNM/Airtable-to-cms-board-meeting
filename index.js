@@ -13,12 +13,12 @@ const tableName = process.env.AIRTABLE_TABLE_NAME;
 const webflow = new Webflow({ token: process.env.WEBFLOW_API_KEY });
 const collectionId = process.env.WEBFLOW_COLLECTION_ID;
 
-// Sleep to avoid rate limits
+// Sleep function to avoid Webflow rate limits
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Create only the name field in Webflow
+// Create item in Webflow (only name field for now)
 async function createWebflowItem(fields) {
   try {
     const response = await webflow.createItem({
@@ -31,7 +31,7 @@ async function createWebflowItem(fields) {
       live: true,
     });
 
-    console.log(`✅ Created item: ${response._id}`);
+    console.log(`✅ Created Webflow item: ${response._id}`);
     return response._id;
   } catch (err) {
     console.error("❌ Error creating Webflow item:", err.response?.data || err.message);
@@ -39,20 +39,23 @@ async function createWebflowItem(fields) {
   }
 }
 
-// Handle each Airtable record
+// Handle a single Airtable record
 async function handleAirtableRecord(record) {
   try {
+    // Debug: print all Airtable fields
+    console.log("📦 Airtable Record Fields:", record.fields);
+
     const webflowFields = {
       name: String(record.fields["Council"] || "Untitled"),
     };
 
     await createWebflowItem(webflowFields);
   } catch (err) {
-    console.error("❌ Error handling record:", err.message);
+    console.error("❌ Error handling Airtable record:", err.message);
   }
 }
 
-// Process all records
+// Fetch and process all records from Airtable
 async function processAirtableRecords() {
   base(tableName)
     .select({ view: "Master Data" })
@@ -60,19 +63,19 @@ async function processAirtableRecords() {
       async (records, fetchNextPage) => {
         for (const record of records) {
           await handleAirtableRecord(record);
-          await sleep(1100); // avoid rate limit
+          await sleep(1100); // Prevent Webflow rate limit
         }
         fetchNextPage();
       },
       (err) => {
         if (err) {
-          console.error("❌ Error fetching records:", err);
+          console.error("❌ Error fetching Airtable records:", err);
         } else {
-          console.log("✅ Finished processing.");
+          console.log("✅ Finished processing all records.");
         }
       }
     );
 }
 
-// Run
+// Start the script
 processAirtableRecords();
