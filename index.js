@@ -92,7 +92,7 @@ const updateWebflowItem = async (webflowItemId, airtableRecordFields) => {
             "agenda": agendaUrl || '',
         },
     };
-
+    
     console.log('📤 Sending to Webflow (Update):', JSON.stringify(webflowPayload, null, 2));
 
     try {
@@ -155,7 +155,7 @@ const handleAirtableWebhook = async (req, res) => {
             'Status': status,
             'Agenda': Array.isArray(agenda) && agenda.length > 0 ? agenda[0].url : '',
         };
-
+        console.log(airtableRecordFields);
         let webflowItemId = webflowId;
 
         if (webflowItemId) {
