@@ -35,7 +35,7 @@ const createWebflowItem = async (airtableRecordFields) => {
 
     try {
         const response = await axios.post(
-            `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items`,
+            `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/live`,
             webflowPayload,
             {
                 headers: {
