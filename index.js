@@ -28,7 +28,6 @@ const createWebflowItem = async (airtableRecordFields) => {
         fieldData: {
             name: webflowName,
             slug: webflowSlug,
-            description: 'No description available', // Assuming no description in Airtable
         },
     };
 
