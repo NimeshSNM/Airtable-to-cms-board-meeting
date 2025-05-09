@@ -27,11 +27,7 @@ const getWebflowItem = async (itemId) => {
 };
 
 const createWebflowItem = async (airtableRecordFields) => {
-    const schemaRes = await axios.get(
-  `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}`,
-  { headers: { Authorization: `Bearer ${WEBFLOW_API_KEY}` } }
-);
-console.log("🧩 Webflow Field Schema:", schemaRes.data.fields);
+    
     let webflowName = 'untitled';
     if (airtableRecordFields['Council Name']) {
         if (Array.isArray(airtableRecordFields['Council Name'])) {
@@ -47,7 +43,7 @@ console.log("🧩 Webflow Field Schema:", schemaRes.data.fields);
         fieldData: {
             name: webflowName,
             slug: webflowSlug,
-            boardMeeting: airtableRecordFields['Related Board meeting'] || ''
+            "board-meeting": airtableRecordFields['Related Board meeting'] || ''
         },
     };
 
@@ -86,7 +82,7 @@ const updateWebflowItem = async (webflowItemId, airtableRecordFields) => {
         fieldData: {
             name: webflowName,
             slug: currentSlug,
-            boardMeeting: airtableRecordFields['Related Board meeting'] || ''
+            "board-meeting": airtableRecordFields['Related Board meeting'] || ''
         },
     };
 
