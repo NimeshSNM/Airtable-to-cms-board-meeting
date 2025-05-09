@@ -28,8 +28,8 @@ const getWebflowItem = async (itemId) => {
 
 const createWebflowItem = async (airtableRecordFields) => {
     const schemaRes = await axios.get(
-  `https://api.webflow.com/v2/collections/${collectionId}`,
-  { headers: { Authorization: `Bearer ${webflowToken}` } }
+  `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}`,
+  { headers: { Authorization: `Bearer ${WEBFLOW_API_KEY}` } }
 );
 console.log("🧩 Webflow Field Schema:", schemaRes.data.fields);
     let webflowName = 'untitled';
