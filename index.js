@@ -38,7 +38,7 @@ const createWebflowItem = async (airtableRecordFields) => {
     }
 
     const webflowSlug = `${webflowName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now()}`;
-
+    const agendaUrl = Array.isArray(airtableRecordFields['Agenda']) && airtableRecordFields['Agenda'].length > 0 ? airtableRecordFields['Agenda'][0].url : '';
     const webflowPayload = {
         fieldData: {
             name: webflowName,
@@ -46,7 +46,7 @@ const createWebflowItem = async (airtableRecordFields) => {
             "board-meeting": airtableRecordFields['Related Board meeting'] || '',
             "status": airtableRecordFields['Status'] || '',
             "year": airtableRecordFields['Year'] || '',
-            "agenda": airtableRecordFields['Agenda'] || '',
+            "agenda": agendaUrl
         },
     };
 
@@ -74,6 +74,7 @@ const createWebflowItem = async (airtableRecordFields) => {
 
 const updateWebflowItem = async (webflowItemId, airtableRecordFields) => {
     let webflowName = airtableRecordFields['Council Name'];
+    const agendaUrl = Array.isArray(airtableRecordFields['Agenda']) && airtableRecordFields['Agenda'].length > 0 ? airtableRecordFields['Agenda'][0].url : '';
     if (Array.isArray(webflowName)) {
         webflowName = webflowName[0] || 'untitled';
     }
@@ -88,7 +89,7 @@ const updateWebflowItem = async (webflowItemId, airtableRecordFields) => {
             "board-meeting": airtableRecordFields['Related Board meeting'] || '',
             "status": airtableRecordFields['Status'] || '',
             "year": airtableRecordFields['Year'] || '',
-            "agenda": airtableRecordFields['Agenda'] || '',
+            "agenda": agendaUrl || '',
         },
     };
 
