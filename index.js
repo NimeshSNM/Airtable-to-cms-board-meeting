@@ -36,7 +36,6 @@ const createWebflowItem = async (airtableRecordFields) => {
         }
     }
 
-    // Slug must be unique
     const webflowSlug = `${webflowName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${Date.now()}`;
 
     const webflowPayload = {
@@ -74,14 +73,13 @@ const updateWebflowItem = async (webflowItemId, airtableRecordFields) => {
         webflowName = webflowName[0] || 'untitled';
     }
 
-    // Get current item to preserve slug
     const existingItem = await getWebflowItem(webflowItemId);
     const currentSlug = existingItem?.fieldData?.slug;
 
     const webflowPayload = {
         fieldData: {
             name: webflowName,
-            slug: currentSlug,
+            slug: currentSlug, // preserve existing slug
         },
     };
 
@@ -131,7 +129,7 @@ const updateAirtableRecord = async (airtableRecordId, webflowItemId) => {
     }
 };
 
-// Webhook handler for Airtable
+// ✅ Main webhook handler
 const handleAirtableWebhook = async (req, res) => {
     try {
         console.log('📥 Received webhook payload:', req.body);
@@ -147,6 +145,20 @@ const handleAirtableWebhook = async (req, res) => {
         };
 
         let webflowItemId = webflowId;
+
+        // ✅ Try to fetch Webflow ID from Airtable if not provided
+        if (!webflowItemId) {
+            const airtableResponse = await axios.get(
+                `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}/${recordId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+                    },
+                }
+            );
+            webflowItemId = airtableResponse.data.fields['Webflow ID'];
+            console.log('📄 Webflow ID from Airtable:', webflowItemId);
+        }
 
         if (webflowItemId) {
             await updateWebflowItem(webflowItemId, airtableRecordFields);
