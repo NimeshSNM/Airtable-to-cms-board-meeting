@@ -1,8 +1,7 @@
 const express = require('express');
 const axios = require('axios');
-require('dotenv').config(); // To load environment variables from .env file
+require('dotenv').config(); // Load environment variables from .env
 
-// Use environment variables from Render or local environment
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME;
@@ -10,23 +9,25 @@ const WEBFLOW_API_KEY = process.env.WEBFLOW_API_KEY;
 const WEBFLOW_COLLECTION_ID = process.env.WEBFLOW_COLLECTION_ID;
 
 const app = express();
-app.use(express.json()); // Parse incoming JSON payloads
+app.use(express.json()); // Enable JSON parsing
 
-// Webflow item creation function (already provided in your code)
+// --- Create Webflow Item ---
 const createWebflowItem = async (airtableRecordFields) => {
     let webflowName = 'Untitled';
-    if (airtableRecordFields['Council Name']) {
-        if (Array.isArray(airtableRecordFields['Council Name'])) {
-            webflowName = airtableRecordFields['Council Name'][0] || 'Untitled';
+
+    if (airtableRecordFields && airtableRecordFields['Council Name']) {
+        const councilName = airtableRecordFields['Council Name'];
+        if (Array.isArray(councilName)) {
+            webflowName = councilName[0] || 'Untitled';
         } else {
-            webflowName = airtableRecordFields['Council Name'] || 'Untitled';
+            webflowName = councilName;
         }
     }
 
     const webflowFields = {
         name: webflowName,
         slug: webflowName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'untitled',
-        description: airtableRecordFields.Description || 'No description',
+        description: airtableRecordFields?.Description || 'No description',
     };
 
     const webflowPayload = {
@@ -35,7 +36,7 @@ const createWebflowItem = async (airtableRecordFields) => {
 
     try {
         const response = await axios.post(
-            `https://api.webflow.com/collections/${WEBFLOW_COLLECTION_ID}/items`,  // Use v3 API
+            `https://api.webflow.com/collections/${WEBFLOW_COLLECTION_ID}/items`,
             webflowPayload,
             {
                 headers: {
@@ -51,7 +52,7 @@ const createWebflowItem = async (airtableRecordFields) => {
     }
 };
 
-// Airtable record update function (already provided in your code)
+// --- Update Airtable Record ---
 const updateAirtableRecord = async (airtableRecordId, webflowItemId) => {
     const payload = {
         fields: {
@@ -70,19 +71,21 @@ const updateAirtableRecord = async (airtableRecordId, webflowItemId) => {
                 },
             }
         );
-        console.log(`Airtable record ${airtableRecordId} updated with Webflow Item ID ${webflowItemId}`);
+        console.log(`✅ Airtable record ${airtableRecordId} updated with Webflow Item ID ${webflowItemId}`);
     } catch (error) {
         console.error('Error updating Airtable record:', error.response?.data || error.message);
         throw new Error(`Failed to update Airtable record: ${error.message}`);
     }
 };
 
-// Handle the Airtable webhook event
+// --- Handle Airtable Webhook ---
 const handleAirtableWebhook = async (req, res) => {
     try {
+        console.log('📥 Incoming webhook payload:', JSON.stringify(req.body, null, 2));
+
         const { records } = req.body;
         if (!records || records.length === 0) {
-            console.log('Received Airtable webhook with no records.');
+            console.log('⚠️ No records found in webhook.');
             return res.status(200).send('OK');
         }
 
@@ -90,26 +93,29 @@ const handleAirtableWebhook = async (req, res) => {
         const airtableRecordId = newRecord.id;
         const airtableRecordFields = newRecord.fields;
 
-        console.log('Received new Airtable record:', { airtableRecordId, airtableRecordFields });
+        if (!airtableRecordFields) {
+            throw new Error('⚠️ No "fields" object found in record.');
+        }
 
-        // Create a new Webflow item
+        console.log('📄 Record Fields:', airtableRecordFields);
+
         const webflowItemId = await createWebflowItem(airtableRecordFields);
-
-        // Update Airtable record with Webflow Item ID
         await updateAirtableRecord(airtableRecordId, webflowItemId);
 
-        res.status(200).json({ message: 'Successfully processed Airtable webhook and updated Webflow and Airtable.' });
+        res.status(200).json({
+            message: '✅ Successfully processed webhook and updated Webflow and Airtable.',
+        });
     } catch (error) {
-        console.error('Error handling Airtable webhook:', error);
+        console.error('❌ Error handling webhook:', error);
         res.status(500).json({ error: error.message });
     }
 };
 
-// Define route for Airtable webhook (this is where POST requests are handled)
+// --- Setup Route ---
 app.post('/airtable-webhook', handleAirtableWebhook);
 
-// Start the Express server
+// --- Start Server ---
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+    console.log(`🚀 Server listening on port ${port}`);
 });
