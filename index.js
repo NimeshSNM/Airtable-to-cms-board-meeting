@@ -46,6 +46,7 @@ const createWebflowItem = async (airtableRecordFields) => {
             "board-meeting": airtableRecordFields['Related Board meeting'] || '',
             "status": airtableRecordFields['Status'] || '',
             "year": airtableRecordFields['Year'] || '',
+            "agenda": airtableRecordFields['Agenda'] || '',
         },
     };
 
@@ -87,6 +88,7 @@ const updateWebflowItem = async (webflowItemId, airtableRecordFields) => {
             "board-meeting": airtableRecordFields['Related Board meeting'] || '',
             "status": airtableRecordFields['Status'] || '',
             "year": airtableRecordFields['Year'] || '',
+            "agenda": airtableRecordFields['Agenda'] || '',
         },
     };
 
@@ -140,7 +142,7 @@ const handleAirtableWebhook = async (req, res) => {
     try {
         console.log('📥 Received webhook payload:', req.body);
 
-        const { councilName, relatedBoardMeeting, year, status, recordId, webflowId } = req.body;
+        const { councilName, relatedBoardMeeting, year, status, agenda, recordId, webflowId } = req.body;
         if (!councilName || !recordId) {
             return res.status(400).send('Missing required fields');
         }
@@ -149,7 +151,8 @@ const handleAirtableWebhook = async (req, res) => {
             'Council Name': councilName,
             'Related Board meeting': relatedBoardMeeting,
             'Year': year,
-            'Status': status
+            'Status': status,
+            'Agenda': Array.isArray(agenda) && agenda.length > 0 ? agenda[0].url : '',
         };
 
         let webflowItemId = webflowId;
