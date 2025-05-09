@@ -42,6 +42,7 @@ const createWebflowItem = async (airtableRecordFields) => {
         fieldData: {
             name: webflowName,
             slug: webflowSlug,
+            boardMeeting: airtableRecordFields['Related Board meeting'] || ''
         },
     };
 
@@ -79,7 +80,8 @@ const updateWebflowItem = async (webflowItemId, airtableRecordFields) => {
     const webflowPayload = {
         fieldData: {
             name: webflowName,
-            slug: currentSlug, // preserve existing slug
+            slug: currentSlug,
+            boardMeeting: airtableRecordFields['Related Board meeting'] || ''
         },
     };
 
@@ -129,36 +131,21 @@ const updateAirtableRecord = async (airtableRecordId, webflowItemId) => {
     }
 };
 
-// ✅ Main webhook handler
 const handleAirtableWebhook = async (req, res) => {
     try {
         console.log('📥 Received webhook payload:', req.body);
 
-        const { councilName, recordId, webflowId } = req.body;
+        const { councilName, relatedBoardMeeting, recordId, webflowId } = req.body;
         if (!councilName || !recordId) {
-            console.log('⚠️ Missing required fields in webhook');
-            return res.status(400).send('Missing councilName or recordId.');
+            return res.status(400).send('Missing required fields');
         }
 
         const airtableRecordFields = {
             'Council Name': councilName,
+            'Related Board meeting': relatedBoardMeeting,
         };
 
         let webflowItemId = webflowId;
-
-        // ✅ Try to fetch Webflow ID from Airtable if not provided
-        if (!webflowItemId) {
-            const airtableResponse = await axios.get(
-                `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}/${recordId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-                    },
-                }
-            );
-            webflowItemId = airtableResponse.data.fields['Webflow ID'];
-            console.log('📄 Webflow ID from Airtable:', webflowItemId);
-        }
 
         if (webflowItemId) {
             await updateWebflowItem(webflowItemId, airtableRecordFields);
