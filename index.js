@@ -46,18 +46,47 @@ const createWebflowItem = async (airtableRecordFields) => {
             }
         );
         console.log('Webflow response:', response.data);
-        return response.data.id;     
+        return response.data.id; // Return the Webflow Item ID
     } catch (error) {
         console.error('❌ Error creating Webflow item:', error.response?.data || error.message);
         throw new Error(`Failed to create Webflow item: ${error.message}`);
     }
 };
 
-// Function to update Airtable with the Webflow Item ID
+// Function to update Webflow item (if it already exists)
+const updateWebflowItem = async (webflowId, airtableRecordFields) => {
+    const webflowPayload = {
+        fieldData: {
+            name: airtableRecordFields['Council Name'],
+        },
+    };
+
+    console.log('Sending update to Webflow:', JSON.stringify(webflowPayload, null, 2));
+
+    try {
+        const response = await axios.patch(
+            `https://api.webflow.com/v2/collections/${WEBFLOW_COLLECTION_ID}/items/${webflowId}`,
+            webflowPayload,
+            {
+                headers: {
+                    Authorization: `Bearer ${WEBFLOW_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'accept-version': '2.0.0', // Webflow API v2
+                },
+            }
+        );
+        console.log('Webflow item updated:', response.data);
+    } catch (error) {
+        console.error('❌ Error updating Webflow item:', error.response?.data || error.message);
+        throw new Error(`Failed to update Webflow item: ${error.message}`);
+    }
+};
+
+// Function to update Airtable record with Webflow Item ID
 const updateAirtableRecord = async (airtableRecordId, webflowItemId) => {
     const payload = {
         fields: {
-            'Webflow ID': webflowItemId, // Update the Airtable field to "Webflow ID"
+            'Webflow ID': webflowItemId, // Store the Webflow Item ID
         },
     };
 
@@ -72,7 +101,7 @@ const updateAirtableRecord = async (airtableRecordId, webflowItemId) => {
                 },
             }
         );
-        console.log(`✅ Airtable record ${airtableRecordId} updated with Webflow ID ${webflowItemId}`);
+        console.log(`✅ Airtable record ${airtableRecordId} updated with Webflow Item ID ${webflowItemId}`);
     } catch (error) {
         console.error('❌ Error updating Airtable record:', error.response?.data || error.message);
         throw new Error(`Failed to update Airtable record: ${error.message}`);
@@ -84,7 +113,7 @@ const handleAirtableWebhook = async (req, res) => {
     try {
         console.log('📥 Received webhook payload:', req.body);
 
-        const { councilName, recordId } = req.body;
+        const { councilName, recordId, webflowId } = req.body;
         if (!councilName || !recordId) {
             console.log('⚠️ Received Airtable webhook with missing fields.');
             return res.status(400).send('Missing councilName or recordId.');
@@ -94,11 +123,21 @@ const handleAirtableWebhook = async (req, res) => {
             'Council Name': councilName,
         };
 
-        // Create a new Webflow item using Webflow API v2
-        const webflowItemId = await createWebflowItem(airtableRecordFields);
+        // If the Airtable record has a Webflow ID, update the Webflow item
+        if (webflowId) {
+            console.log(`Webflow ID found: ${webflowId}, updating item.`);
+            await updateWebflowItem(webflowId, airtableRecordFields);
 
-        // Update the Airtable record with Webflow Item ID
-        await updateAirtableRecord(recordId, webflowItemId);
+            // After updating Webflow item, update the Airtable record
+            await updateAirtableRecord(recordId, webflowId);
+        } else {
+            // Otherwise, create a new Webflow item and store the Webflow Item ID in Airtable
+            console.log('No Webflow ID found, creating new item.');
+            const webflowItemId = await createWebflowItem(airtableRecordFields);
+
+            // Update the Airtable record with the new Webflow Item ID
+            await updateAirtableRecord(recordId, webflowItemId); // Store the new Webflow ID
+        }
 
         res.status(200).json({ message: '✅ Success' });
     } catch (error) {
