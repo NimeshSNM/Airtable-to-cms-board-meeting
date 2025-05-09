@@ -45,7 +45,8 @@ const createWebflowItem = async (airtableRecordFields) => {
                 },
             }
         );
-        return response.data._id;
+        console.log('Webflow response:', response.data);
+        return response.data._id;     
     } catch (error) {
         console.error('❌ Error creating Webflow item:', error.response?.data || error.message);
         throw new Error(`Failed to create Webflow item: ${error.message}`);
